@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -21,7 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch"; // I'll need to add this
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
@@ -29,16 +30,24 @@ const formSchema = z.object({
         message: "Topic must be at least 2 characters.",
     }),
     level: z.enum(["beginner", "intermediate", "advanced"]),
-    useTrending: z.boolean().default(false),
+    useTrending: z.boolean(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 interface TopicFormProps {
-    onSubmit: (values: z.infer<typeof formSchema>) => void;
+    onSubmit: (values: FormValues) => void;
     isLoading: boolean;
 }
 
+const STORAGE_KEYS = {
+    TOPIC: "lgc:defaultTopic",
+    LEVEL: "lgc:defaultLevel",
+    TRENDING: "lgc:useTrending",
+} as const;
+
 export function TopicForm({ onSubmit, isLoading }: TopicFormProps) {
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             topic: "",
@@ -47,11 +56,34 @@ export function TopicForm({ onSubmit, isLoading }: TopicFormProps) {
         },
     });
 
+    const { setValue, watch, handleSubmit, control } = form;
+
+    // Load from localStorage on mount
+    useEffect(() => {
+        const savedTopic = localStorage.getItem(STORAGE_KEYS.TOPIC);
+        const savedLevel = localStorage.getItem(STORAGE_KEYS.LEVEL) as any;
+        const savedTrending = localStorage.getItem(STORAGE_KEYS.TRENDING);
+
+        if (savedTopic) setValue("topic", savedTopic);
+        if (savedLevel && ["beginner", "intermediate", "advanced"].includes(savedLevel)) {
+            setValue("level", savedLevel);
+        }
+        if (savedTrending) setValue("useTrending", savedTrending === "true");
+    }, [setValue]);
+
+    // Save to localStorage on change
+    const watchedValues = watch();
+    useEffect(() => {
+        if (watchedValues.topic) localStorage.setItem(STORAGE_KEYS.TOPIC, watchedValues.topic);
+        if (watchedValues.level) localStorage.setItem(STORAGE_KEYS.LEVEL, watchedValues.level);
+        localStorage.setItem(STORAGE_KEYS.TRENDING, String(watchedValues.useTrending));
+    }, [watchedValues.topic, watchedValues.level, watchedValues.useTrending]);
+
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="topic"
                     render={({ field }) => (
                         <FormItem>
@@ -68,12 +100,16 @@ export function TopicForm({ onSubmit, isLoading }: TopicFormProps) {
                 />
                 <div className="flex flex-col sm:flex-row gap-6">
                     <FormField
-                        control={form.control}
+                        control={control}
                         name="level"
                         render={({ field }) => (
                             <FormItem className="flex-1">
                                 <FormLabel>Target Level</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    value={field.value}
+                                >
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a level" />
@@ -90,7 +126,7 @@ export function TopicForm({ onSubmit, isLoading }: TopicFormProps) {
                         )}
                     />
                     <FormField
-                        control={form.control}
+                        control={control}
                         name="useTrending"
                         render={({ field }) => (
                             <FormItem className="flex flex-col gap-2">

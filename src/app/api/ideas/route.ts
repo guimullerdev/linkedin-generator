@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { callOpenRouter } from '@/lib/openrouter';
 import { ideasPrompt, trendingIdeasPrompt } from '@/lib/prompts';
 import { ideasResponseSchema } from '@/schemas';
+import { createClient } from '@/lib/supabase/server';
+import { checkAndIncrementUsage } from '@/lib/usage';
 
 const bodySchema = z.object({
     topic: z.string().min(2).max(100),
@@ -12,6 +14,23 @@ const bodySchema = z.object({
 
 export async function POST(req: NextRequest) {
     try {
+        const supabase = await createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const usage = await checkAndIncrementUsage(session.user.id);
+
+        if (!usage.allowed) {
+            return NextResponse.json({
+                error: 'Daily limit reached',
+                plan: usage.plan,
+                limit: usage.limit,
+                resetAt: 'midnight UTC',
+            }, { status: 429 });
+        }
         const rawBody = await req.json();
         const parsed = bodySchema.safeParse(rawBody);
 

@@ -2,9 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { callOpenRouter } from '@/lib/openrouter';
 import { generatePostPrompt } from '@/lib/prompts';
 import { postSchema } from '@/schemas';
+import { createClient } from '@/lib/supabase/server';
+import { checkAndIncrementUsage } from '@/lib/usage';
 
 export async function POST(req: NextRequest) {
     try {
+        const supabase = await createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const usage = await checkAndIncrementUsage(session.user.id);
+
+        if (!usage.allowed) {
+            return NextResponse.json({
+                error: 'Daily limit reached',
+                plan: usage.plan,
+                limit: usage.limit,
+                resetAt: 'midnight UTC',
+            }, { status: 429 });
+        }
         const { idea, persona } = await req.json();
 
         if (!idea) {
