@@ -16,6 +16,7 @@ export const postSchema = z.object({
     body: z.string(),
     cta: z.string(),
     hashtags: z.array(z.string()),
+    rewrittenAt: z.string().optional(),
 });
 
 export type Post = z.infer<typeof postSchema>;

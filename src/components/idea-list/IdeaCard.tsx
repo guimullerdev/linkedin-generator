@@ -1,6 +1,7 @@
 import { Idea } from "@/schemas";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; // I'll need to add this
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface IdeaCardProps {
     idea: Idea;
@@ -24,7 +25,12 @@ const engagementColorMap: Record<Idea['estimatedEngagement'], string> = {
 export function IdeaCard({ idea, onSelect, isSelected }: IdeaCardProps) {
     return (
         <Card
-            className={`cursor-pointer transition-all hover:border-primary ${isSelected ? 'border-primary ring-1 ring-primary' : ''}`}
+            className={cn(
+                "cursor-pointer rounded-xl border transition-all duration-150",
+                isSelected
+                    ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary"
+                    : "border-border hover:border-primary/40 hover:shadow-sm"
+            )}
             onClick={() => onSelect(idea)}
         >
             <CardHeader className="p-4 pb-2">
@@ -32,7 +38,10 @@ export function IdeaCard({ idea, onSelect, isSelected }: IdeaCardProps) {
                     <Badge variant="secondary" className="text-[10px] uppercase">
                         {typeMap[idea.type]}
                     </Badge>
-                    <Badge className={`text-[10px] uppercase ${engagementColorMap[idea.estimatedEngagement]} text-white border-none`}>
+                    <Badge className={cn(
+                        "text-[10px] uppercase text-white border-none",
+                        engagementColorMap[idea.estimatedEngagement]
+                    )}>
                         {idea.estimatedEngagement} Engagement
                     </Badge>
                 </div>

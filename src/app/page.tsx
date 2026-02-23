@@ -16,6 +16,7 @@ export default function Home() {
   const [isLoadingIdeas, setIsLoadingIdeas] = useState(false);
   const [isLoadingPost, setIsLoadingPost] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
+  const [rewriteError, setRewriteError] = useState<string | null>(null);
 
   const handleGenerateIdeas = async (values: any) => {
     setIsLoadingIdeas(true);
@@ -56,6 +57,10 @@ export default function Home() {
     setIsLoadingPost(true);
     setPost(null);
 
+    setTimeout(() => {
+      document.getElementById("post-editor")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+
     try {
       const res = await fetch("/api/post/generate", {
         method: "POST",
@@ -66,11 +71,6 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to generate post");
       const data = await res.json();
       setPost(data);
-
-      // Scroll to editor
-      setTimeout(() => {
-        document.getElementById("post-editor")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
     } catch (error: any) {
       toast.error(error.message || "An error occurred while generating the post");
     } finally {
@@ -79,8 +79,9 @@ export default function Home() {
   };
 
   const handleRewrite = async (mode: string) => {
-    if (!post) return;
+    if (!post || isRewriting) return;
     setIsRewriting(true);
+    setRewriteError(null);
 
     try {
       const res = await fetch("/api/post/rewrite", {
@@ -91,9 +92,13 @@ export default function Home() {
 
       if (!res.ok) throw new Error("Failed to rewrite post");
       const data = await res.json();
-      setPost(data);
+      setPost({
+        ...data,
+        rewrittenAt: new Date().toISOString()
+      });
       toast.success(`Post rewritten in ${mode} mode!`);
     } catch (error: any) {
+      setRewriteError(error.message || "Something went wrong.");
       toast.error(error.message || "An error occurred while rewriting the post");
     } finally {
       setIsRewriting(false);
@@ -109,7 +114,7 @@ export default function Home() {
             LinkedIn Content Generator
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Strategic technology content for developers. Build your personal brand with AI-powered insights.
+            Your code ships. Your ideas should too.
           </p>
         </div>
 
@@ -162,6 +167,7 @@ export default function Home() {
                   onUpdate={setPost}
                   onRewrite={handleRewrite}
                   isRewriting={isRewriting}
+                  rewriteError={rewriteError}
                 />
               )
             )}
@@ -171,11 +177,6 @@ export default function Home() {
         {ideas.length === 0 && !isLoadingIdeas && !post && (
           <EmptyState message="Generate some ideas to get started!" />
         )}
-
-        {/* Footer */}
-        <footer className="pt-12 text-center text-slate-400 text-sm">
-          Built with Next.js, shadcn/ui, and OpenRouter
-        </footer>
       </div>
     </main>
   );
