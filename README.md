@@ -2,7 +2,7 @@
 
 A professional grade, AI-powered content generator designed for developers and tech professionals to build their personal brand on LinkedIn with strategic, insight-driven posts.
 
-![LinkedIn Content Generator Header](https://source.unsplash.com/random/1200x400?technology,coding)
+![LinkedIn Content Generator Header](./docs/images/home.png)
 
 ## 🌟 Key Features
 
