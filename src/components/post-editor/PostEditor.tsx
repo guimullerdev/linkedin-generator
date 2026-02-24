@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Post } from "@/schemas";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,7 +9,7 @@ import { PostActions } from "./PostActions";
 import { useScrollToRef } from "@/hooks/useScrollToRef";
 import { useRewrittenFlash } from "@/hooks/useRewrittenFlash";
 import { PostBodySkeleton } from "./PostBodySkeleton";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PostEditorProps {
     post: Post;
@@ -19,8 +20,15 @@ interface PostEditorProps {
 }
 
 export function PostEditor({ post, onUpdate, onRewrite, isRewriting, rewriteError }: PostEditorProps) {
+    const [activeTab, setActiveTab] = useState("preview");
     const editorRef = useScrollToRef<HTMLDivElement>(post);
     const showFlash = useRewrittenFlash(post.rewrittenAt);
+
+    useEffect(() => {
+        if (isRewriting) {
+            setActiveTab("preview");
+        }
+    }, [isRewriting]);
 
     const handleChange = (field: keyof Post, value: string) => {
         if (field === 'hashtags') {
@@ -55,7 +63,11 @@ export function PostEditor({ post, onUpdate, onRewrite, isRewriting, rewriteErro
                     />
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="preview" className="w-full">
+                    <Tabs
+                        value={activeTab}
+                        onValueChange={setActiveTab}
+                        className="w-full"
+                    >
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="preview">Preview</TabsTrigger>
                             <TabsTrigger value="edit">Edit Content</TabsTrigger>
@@ -72,17 +84,21 @@ export function PostEditor({ post, onUpdate, onRewrite, isRewriting, rewriteErro
                         <TabsContent value="edit" className="mt-4 space-y-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold uppercase text-slate-500">Hook</label>
-                                <Textarea
-                                    value={post.hook}
-                                    onChange={(e) => handleChange('hook', e.target.value)}
-                                    placeholder="Hook"
-                                    className="min-h-[60px]"
-                                />
+                                {isRewriting ? (
+                                    <Skeleton className="h-16 w-full" />
+                                ) : (
+                                    <Textarea
+                                        value={post.hook}
+                                        onChange={(e) => handleChange('hook', e.target.value)}
+                                        placeholder="Hook"
+                                        className="min-h-[60px]"
+                                    />
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold uppercase text-slate-500">Body</label>
                                 {isRewriting ? (
-                                    <PostBodySkeleton />
+                                    <Skeleton className="h-32 w-full" />
                                 ) : (
                                     <Textarea
                                         value={post.body}
@@ -94,21 +110,29 @@ export function PostEditor({ post, onUpdate, onRewrite, isRewriting, rewriteErro
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold uppercase text-slate-500">Call to Action</label>
-                                <Textarea
-                                    value={post.cta}
-                                    onChange={(e) => handleChange('cta', e.target.value)}
-                                    placeholder="CTA"
-                                    className="min-h-[60px]"
-                                />
+                                {isRewriting ? (
+                                    <Skeleton className="h-16 w-full" />
+                                ) : (
+                                    <Textarea
+                                        value={post.cta}
+                                        onChange={(e) => handleChange('cta', e.target.value)}
+                                        placeholder="CTA"
+                                        className="min-h-[60px]"
+                                    />
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold uppercase text-slate-500">Hashtags (comma separated)</label>
-                                <Textarea
-                                    value={post.hashtags.join(', ')}
-                                    onChange={(e) => handleChange('hashtags', e.target.value)}
-                                    placeholder="Hashtags"
-                                    className="min-h-[40px]"
-                                />
+                                {isRewriting ? (
+                                    <Skeleton className="h-10 w-full" />
+                                ) : (
+                                    <Textarea
+                                        value={post.hashtags.join(', ')}
+                                        onChange={(e) => handleChange('hashtags', e.target.value)}
+                                        placeholder="Hashtags"
+                                        className="min-h-[40px]"
+                                    />
+                                )}
                             </div>
                         </TabsContent>
                     </Tabs>
