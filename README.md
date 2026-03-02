@@ -60,8 +60,8 @@ OPENROUTER_API_KEY=your_key
 OPENROUTER_MODEL=your_preferred_model
 
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key # For server-side usage logic
 ```
 
